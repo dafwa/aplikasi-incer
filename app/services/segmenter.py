@@ -53,13 +53,18 @@ class MediaPipeSegmenter:
         image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         results = self.segmenter.process(image_rgb)
         
-        # Create boolean mask
-        mask = results.segmentation_mask > self._SEGMENTATION_THRESHOLD
+        # Ambil raw mask (probabilitas 0.0 - 1.0)
+        raw_mask = results.segmentation_mask
 
+        # TEKNIK HYBRID: Refinement Masker (Perbaikan Tepi)
+        # Kita panggil fungsi perbaikan yang menggunakan teknik klasik
+        refined_mask = self._refine_mask(raw_mask)
+
+        # Apply Mask
         if transparent:
-            return self._apply_transparency(image, mask)
+            return self._apply_transparency(image, refined_mask)
         else:
-            return self._apply_solid_background(image, mask, bg_color)
+            return self._apply_solid_background(image, refined_mask, bg_color)
 
     def replace_background(self, foreground: np.ndarray, background_image: np.ndarray) -> np.ndarray:
 
@@ -78,37 +83,21 @@ class MediaPipeSegmenter:
         image_rgb = cv2.cvtColor(foreground, cv2.COLOR_BGR2RGB)
         results = self.segmenter.process(image_rgb)
         
-        # Create 3-channel mask for broadcasting
-        condition = np.stack((results.segmentation_mask,) * 3, axis=-1) > self._SEGMENTATION_THRESHOLD
+        # --- HYBRID REFINEMENT ---
+        raw_mask = results.segmentation_mask
+        refined_mask = self._refine_mask(raw_mask)
+        # -------------------------
         
-        # Combine: Where condition is True (Person), use foreground. Else use background.
-        output_image = np.where(condition, foreground, background_image)
+        # Gunakan refined_mask untuk menggabungkan
+        # Kita perlu expand dimensi mask agar jadi 3 channel (H, W, 3)
+        mask_3d = np.stack((refined_mask,) * 3, axis=-1)
+        
+        # Lakukan Linear Interpolation (Blending Halus)
+        # Rumus: (Foreground * Alpha) + (Background * (1 - Alpha))
+        # Ini lebih halus daripada np.where (Hard Cut)
+        output_image = (foreground * mask_3d + background_image * (1 - mask_3d)).astype(np.uint8)
         
         return output_image
-
-    def _apply_transparency(self, image: np.ndarray, mask: np.ndarray) -> np.ndarray:
-        # Internal helper to apply alpha channel based on mask.
-        # Create Alpha channel: 255 where mask is True, 0 otherwise
-        alpha_channel = np.where(mask, 255, 0).astype(np.uint8)
-        
-        # Stack BGR image with new Alpha channel -> BGRA
-        return np.dstack((image, alpha_channel))
-
-    def _apply_solid_background(
-        self, 
-        image: np.ndarray, 
-        mask: np.ndarray, 
-        color: Tuple[int, int, int]
-    ) -> np.ndarray:
-        # Internal helper to apply solid color background.
-        # Create solid background image
-        bg_image = np.zeros(image.shape, dtype=np.uint8)
-        bg_image[:] = color
-        
-        # Stack mask to 3 channels for BGR operation
-        condition = np.stack((mask,) * 3, axis=-1)
-        
-        return np.where(condition, image, bg_image)
     
     def draw_face_mesh(self, image: np.ndarray) -> np.ndarray:
 
@@ -148,3 +137,39 @@ class MediaPipeSegmenter:
                 )
         
         return annotated_image
+    
+    def _refine_mask(self, raw_mask: np.ndarray) -> np.ndarray:
+        
+        # Menggabungkan output AI dengan operasi morfologi klasik untuk hasil lebih rapi.
+        # 1. Thresholding (Binarisasi Awal)
+        # Kita buat batas tegas dulu: > 0.5 jadi 1, sisanya 0
+        mask = (raw_mask > self._SEGMENTATION_THRESHOLD).astype(np.float32)
+
+        # 2. Morphological Operation (Closing)
+        # Berguna untuk menutup lubang-lubang kecil di dalam objek (misal: logo baju)
+        # Kernel 3x3 adalah "jendela" pengamatan
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+
+        # 3. Gaussian Blur (Feathering/Soft Edges)
+        # Ini yang paling penting! Membuat pinggiran tidak tajam (anti-aliasing)
+        # Sigma (2.0) menentukan seberapa lebar keburamannya
+        mask = cv2.GaussianBlur(mask, (0, 0), sigmaX=2.0, sigmaY=2.0)
+        
+        return mask
+
+    def _apply_transparency(self, image: np.ndarray, mask: np.ndarray) -> np.ndarray:
+        # Ubah mask (0.0 - 1.0) menjadi Alpha (0 - 255)
+        alpha_channel = (mask * 255).astype(np.uint8)
+        return np.dstack((image, alpha_channel))
+
+    def _apply_solid_background(self, image: np.ndarray, mask: np.ndarray, color: Tuple[int, int, int]) -> np.ndarray:
+        bg_image = np.zeros(image.shape, dtype=np.uint8)
+        bg_image[:] = color
+        
+        # Blending Halus
+        mask_3d = np.stack((mask,) * 3, axis=-1)
+        
+        # Rumus Blending: Image*Mask + BG*(1-Mask)
+        output = (image * mask_3d + bg_image * (1 - mask_3d)).astype(np.uint8)
+        return output
