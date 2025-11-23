@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="id" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instrumentasi Cerdas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="d-flex flex-column min-vh-100">
+
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h1 class="display-6 fw-bold text-gradient">Pengolahan Citra Digital</h1>
+        <p class="text-secondary">Segmentasi Wajah Berbasis FastAPI & MediaPipe</p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card h-100 shadow-lg border-0 bg-card-dark">
+                <div class="card-header bg-transparent border-0 pt-4 px-4">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box bg-primary-subtle text-primary rounded-circle me-3">
+                            <i class="fas fa-camera"></i>
+                        </div>
+                        <h5 class="mb-0 fw-semibold">Sumber Citra</h5>
+                    </div>
+                </div>
+                <div class="card-body px-4">
+                    <ul class="nav nav-pills nav-fill mb-4 p-1 rounded-3 bg-dark-input" id="sourceTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active rounded-3" id="upload-tab" data-bs-toggle="pill" data-bs-target="#upload-pane" type="button">
+                                <i class="fas fa-upload me-2"></i>Upload
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link rounded-3" id="webcam-tab" data-bs-toggle="pill" data-bs-target="#webcam-pane" type="button">
+                                <i class="fas fa-video me-2"></i>Webcam
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="sourceTabContent">
+                        <div class="tab-pane fade show active" id="upload-pane">
+                            <div class="upload-area p-5 text-center border-dashed rounded-4" onclick="document.getElementById('imageInput').click()">
+                                <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                                <p class="text-muted mb-0">Klik untuk pilih file atau drag & drop</p>
+                                <input type="file" id="imageInput" accept="image/*" hidden>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="webcam-pane">
+                            <div class="position-relative bg-black rounded-4 overflow-hidden" style="min-height: 250px;">
+                                <video id="video" width="100%" autoplay playsinline class="mirror-mode" style="display:none;"></video>
+                                <canvas id="canvas" style="display:none;"></canvas>
+                                
+                                <div class="position-absolute bottom-0 start-0 w-100 p-3 text-center bg-gradient-overlay">
+                                    <button id="startCameraBtn" class="btn btn-primary rounded-pill px-4 me-2">
+                                        <i class="fas fa-power-off me-2"></i>Start
+                                    </button>
+                                    <button id="captureBtn" class="btn btn-light rounded-pill px-4 fw-bold" disabled>
+                                        <i class="fas fa-camera me-2"></i>Ambil Gambar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h6 class="text-uppercase text-xs text-muted fw-bold ls-1">Preview Input</h6>
+                        <div class="preview-container rounded-3 overflow-hidden border border-secondary border-opacity-25 bg-dark-input">
+                            <img id="previewImage" src="" class="img-fluid d-block mx-auto" style="display: none; max-height: 300px;">
+                            <div id="previewPlaceholder" class="text-center py-5 text-muted small">
+                                Belum ada gambar dipilih
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card h-100 shadow-lg border-0 bg-card-dark">
+                <div class="card-header bg-transparent border-0 pt-4 px-4">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box bg-success-subtle text-success rounded-circle me-3">
+                            <i class="fas fa-sliders-h"></i>
+                        </div>
+                        <h5 class="mb-0 fw-semibold">Panel Kontrol</h5>
+                    </div>
+                </div>
+                <div class="card-body px-4">
+                    <form id="processForm">
+                        <div class="mb-4">
+                            <label class="form-label text-muted small text-uppercase fw-bold">Pilih Metode Proses</label>
+                            <select class="form-select form-select-lg bg-dark-input border-0 text-light focus-ring" id="actionSelect">
+                                <option value="grayscale">Grayscale (Hitam Putih)</option>
+                                <option value="blur">Gaussian Blur</option>
+                                <option value="sepia">Filter Sepia</option>
+                                <option value="edge_detection">Deteksi Tepi (Canny)</option>
+                                <option value="face_mesh">Visualisasi Face Mesh (AI)</option>
+                                <option value="threshold">Binarisasi (Otsu Threshold)</option>
+                                <option value="remove_bg">Hapus Background</option>
+                                <option value="replace_bg">Ganti Background (Custom)</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-4 p-3 rounded-3 bg-dark-input border border-secondary border-opacity-25" id="bgInputContainer" style="display:none;">
+                            <label class="form-label text-warning small text-uppercase fw-bold mb-3"><i class="fas fa-layer-group me-2"></i>Pengaturan Background</label>
+                            
+                            <div class="d-flex gap-3 mb-3">
+                                <div class="form-check custom-radio">
+                                    <input class="form-check-input" type="radio" name="bgMode" id="modeImage" value="image" checked>
+                                    <label class="form-check-label" for="modeImage">Gambar</label>
+                                </div>
+                                <div class="form-check custom-radio">
+                                    <input class="form-check-input" type="radio" name="bgMode" id="modeColor" value="color">
+                                    <label class="form-check-label" for="modeColor">Warna Solid</label>
+                                </div>
+                            </div>
+
+                            <div id="inputImageContainer">
+                                <input type="file" class="form-control form-control-sm bg-black border-secondary" id="bgInput" accept="image/*">
+                            </div>
+
+                            <div id="inputColorContainer" style="display:none;">
+                                <div class="d-flex align-items-center gap-2">
+                                    <input type="color" class="form-control form-control-color bg-transparent border-0" id="bgColorInput" value="#3b82f6">
+                                    <span class="text-muted small">Klik kotak untuk pilih warna</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 py-3 fw-bold rounded-3 shadow-primary" id="processBtn" disabled>
+                            <i class="fas fa-bolt me-2"></i>Proses Citra
+                        </button>
+                    </form>
+
+                    <div class="mt-4 pt-4 border-top border-secondary border-opacity-25" id="resultCard" style="display:none;">
+                        <h6 class="text-uppercase text-xs text-success fw-bold ls-1 mb-3">Hasil Output</h6>
+                        <div class="result-container rounded-3 overflow-hidden border border-success border-opacity-25 position-relative">
+                            <img id="resultImage" src="" class="img-fluid w-100">
+                        </div>
+                        <br>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="text-muted small">Waktu Proses:</span>
+                            <span id="executionTime" class="badge bg-dark border border-secondary text-info font-monospace">0.00 ms</span>
+                        </div>
+
+                        <a id="downloadLink" href="#" class="btn btn-outline-success w-100 mt-3" download>
+                            <i class="fas fa-download me-2"></i>Simpan Hasil
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="footer mt-auto py-3 bg-card-dark border-top border-secondary border-opacity-25">
+    <div class="container text-center">
+        <p class="mb-0 text-muted small">
+            &copy; 2025 Universitas Negeri Makassar. Made with <i class="fas fa-heart text-danger mx-1"></i> 
+            using <span class="text-primary fw-bold">FastAPI</span> & <span class="text-info fw-bold">MediaPipe</span>
+        </p>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/static/js/script.js"></script>
+</body>
+</html>
