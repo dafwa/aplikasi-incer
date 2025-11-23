@@ -86,7 +86,7 @@ Buat Virtual Environment di Python atau Conda.
 python -m venv [name_virtual_environment]
 
 # jika memakai conda
-conda create -n [name_virtual_environment]
+conda create -n [name_virtual_environment] python=3.10
 ```
 
 Setelah Virtual Environment terbuat, Aktifkan Environment.
