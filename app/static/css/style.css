@@ -1,0 +1,150 @@
+/* --- Root Variables untuk Konsistensi Warna --- */
+:root {
+    --bg-body: #121212;         /* Sangat gelap, hampir hitam */
+    --bg-card: #1e1e24;         /* Abu-abu gelap kebiruan */
+    --bg-input: #2b2b36;        /* Sedikit lebih terang untuk input */
+    --primary-color: #3b82f6;   /* Biru Science */
+    --text-main: #e2e8f0;       /* Putih tulang (tidak menyilaukan) */
+    --text-muted: #94a3b8;      /* Abu-abu terang */
+}
+
+/* --- Global Styles --- */
+body {
+    background-color: var(--bg-body) !important;
+    color: var(--text-main) !important;
+    font-family: "Plus Jakarta Sans", 'Segoe UI';
+}
+
+/* --- Card Styles --- */
+.bg-card-dark {
+    background-color: var(--bg-card) !important;
+}
+
+.icon-box {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+}
+
+/* --- Typography --- */
+.text-gradient {
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.text-xs {
+    font-size: 0.75rem;
+}
+
+.ls-1 {
+    letter-spacing: 1px;
+}
+
+/* --- Form & Inputs --- */
+.bg-dark-input {
+    background-color: var(--bg-input) !important;
+}
+
+.form-control, .form-select {
+    color: var(--text-main) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.form-control:focus, .form-select:focus {
+    background-color: var(--bg-input);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25);
+}
+
+/* --- Upload Area --- */
+.upload-area {
+    border: 2px dashed rgba(255, 255, 255, 0.1);
+    background-color: var(--bg-input);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.upload-area:hover {
+    border-color: var(--primary-color);
+    background-color: rgba(59, 130, 246, 0.05);
+}
+
+.upload-area.highlight {
+    border-color: var(--primary-color);
+    background-color: rgba(59, 130, 246, 0.15);
+    transform: scale(1.02); /* Efek membesar sedikit */
+}
+
+/* --- Webcam Styles --- */
+.mirror-mode {
+    transform: scaleX(-1); /* Efek Cermin */
+}
+
+.bg-gradient-overlay {
+    background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+}
+
+/* --- Nav Pills (Tabs) --- */
+.nav-pills .nav-link {
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.nav-pills .nav-link.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+/* --- Button Enhancements --- */
+.shadow-primary {
+    box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.39);
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border: none;
+}
+
+.btn-primary:hover {
+    background-color: #2563eb;
+}
+
+/* --- Scrollbar Customization (Opsional, untuk Chrome/Edge) --- */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: var(--bg-body);
+}
+::-webkit-scrollbar-thumb {
+    background: #475569;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+}
+
+video {
+    transform: scaleX(-1); /* Efek cermin untuk webcam agar natural */
+}
+
+/* --- Footer Styles --- */
+.footer {
+    backdrop-filter: blur(10px);
+    z-index: 10;
+}
+
+.footer small {
+    font-size: 0.85rem;
+}
+
+/* Animasi kecil untuk ikon hati saat di-hover footer */
+.footer:hover .fa-heart {
+    transform: scale(1.2);
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
