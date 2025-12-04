@@ -56,7 +56,7 @@ Fitur-fitur ini memanfaatkan model *Machine Learning* (MediaPipe) untuk pemahama
 ## Struktur Direktori
 
 ```text
-project-folder/
+aplikasi-incer/
 │
 ├── app/
 │   ├── api/
@@ -76,9 +76,14 @@ project-folder/
 ```
 
 ## INSTALASI
-Pastikan anda berada didalam ```~project-folder/```
+Silahkan Clone Repository ini
 ```bash
-cd project-folder
+git clone https://github.com/dafwa/aplikasi-incer.git
+```
+
+Pastikan anda berada didalam ```~aplikasi-incer/```
+```bash
+cd aplikasi-incer
 ```
 
 Buat Virtual Environment di Python atau Conda.
@@ -109,7 +114,6 @@ python-multipart
 numpy
 opencv-python
 mediapipe
-jinja2
 ```
 
 ## 🚀 Jalankan
