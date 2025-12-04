@@ -4,4 +4,3 @@ python-multipart
 numpy
 opencv-python
 mediapipe
-jinja2
